@@ -9,10 +9,36 @@ import UIKit
 import RealmSwift
 import UserNotifications
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var searchBar: UISearchBar!
+    
+    
     
     let realm = try! Realm()
+    
+    
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        //seachTextをunwrap
+        guard let seachText = searchBar.text else{
+            return
+        }
+        //seachTextが””の場合全件表示
+        if seachText == ""{
+            taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date",ascending: true)
+            tableView.reloadData()
+        }else{
+        //空白以外はカテゴリーで抽出
+        taskArray = try! Realm().objects(Task.self)
+            .filter("category = %@",seachText)
+            .sorted(byKeyPath: "date", ascending: true)
+        
+        tableView.reloadData()
+        }
+    }
+        
+    
     
     
     //DB内のタスクが格納されるリスト
@@ -27,8 +53,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         tableView.delegate = self
         tableView.dataSource = self
         
+        searchBar.delegate = self
+        
         print(Realm.Configuration.defaultConfiguration.fileURL!)
     }
+   
+    
     
     //データの数（＝セルの数）を返すメソッド
     @objc func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int{
